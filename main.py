@@ -69,7 +69,7 @@ def about(update, context):
 
 
 if __name__ == '__main__':
-    updater = Updater(token=TOKEN, request_kwargs={'proxy_url': 'http://127.0.0.1:11223/'})
+    updater = Updater(token=TOKEN)
 
     dispatcher = updater.dispatcher
 
