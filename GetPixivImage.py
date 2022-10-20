@@ -43,13 +43,20 @@ def pixiv_rank(rank_type):
             num = 1
 
         response = {
-            'pid': pid,     # 图片ID
-            'title': title,     # 图片标题
-            'username': username,   # 作者
-            'url': url,     # 图片下载链接
-            'num': num,     # 图片数量
+            'pid': pid,  # 图片ID
+            'title': title,  # 图片标题
+            'username': username,  # 作者
+            'url': url,  # 图片下载链接
+            'num': num,  # 图片数量
         }
 
         resp_list.append(response)
 
     return resp_list
+
+
+# TODO 从Pixiv获取一张随机图片
+def random_pic():
+    url = json.loads(requests.get('https://api.btstu.cn/sjbz/api.php?lx=dongman&format=json').content).get('imgurl')
+
+    return url
