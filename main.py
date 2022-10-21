@@ -1,15 +1,15 @@
-import json
+import datetime
 import os
-
-import time
 import traceback
-
-import requests
+import pytz
 from telegram.ext import Updater, CommandHandler
 
 import GetPixivImage
 
 TOKEN = os.getenv("TOKEN")
+
+tz = pytz.timezone('Asia/Shanghai')
+now_time = datetime.datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')
 
 
 # 打招呼
@@ -22,13 +22,54 @@ def start(update, context):
     )
 
 
-# TODO 从Pixiv获取一张随机图片
 def sese(update, context):
     chat_id = update.message.chat_id
-    dispatcher.bot.sendPhoto(
-        chat_id=chat_id,
-        photo=GetPixivImage.random_pic()
-    )
+    pic_info = GetPixivImage.random_pic()
+    print('{}:"sese"获取到图片信息：{}'.format(now_time, pic_info))
+    try:
+        if pic_info.get('num') != 1:
+            dispatcher.bot.sendPhoto(
+                chat_id=chat_id,
+                photo=pic_info.get('url'),
+                caption='以及{}张图片\n标题：{}\n作者：{}\n<a href="https://www.pixiv.net/artworks/{}">原图链接</a>'.format(
+                    pic_info.get('num') - 1,
+                    pic_info.get('title'),
+                    pic_info.get('username'),
+                    pic_info.get('pid')),
+                parse_mode='HTML'
+            )
+            print('{}:"sese"成功发送信息'.format(now_time))
+        elif pic_info.get('num') == 1:
+            dispatcher.bot.sendPhoto(
+                chat_id=chat_id,
+                photo=pic_info.get('url'),
+                caption='标题：{}\n作者：{}\n<a href="https://www.pixiv.net/artworks/{}">原图链接</a>'.format(
+                    pic_info.get('title'),
+                    pic_info.get('username'),
+                    pic_info.get('pid')),
+                parse_mode='HTML'
+            )
+            print('{}:"sese"成功发送信息'.format(now_time))
+        else:
+            dispatcher.bot.sendMessage(
+                chat_id=chat_id,
+                text='获取图片时发生错误：{}'.format(pic_info.get('message'))
+            )
+            print('{}:"sese"发送信息失败'.format(now_time))
+    except Exception as e:
+        print('{}:"sese"{}'.format(now_time, e))
+        if pic_info.get('message') is None:
+            dispatcher.bot.sendMessage(
+                chat_id=chat_id,
+                text='发送图片时出现错误：{}'.format(e),
+                parse_mode='HTML'
+            )
+        else:
+            dispatcher.bot.sendMessage(
+                chat_id=chat_id,
+                text='获取图片时发生错误：{}'.format(pic_info.get('message'))
+            )
+        print('{}:"sese"发送信息失败'.format(now_time))
 
 
 def day_rank(update, context):
@@ -54,101 +95,131 @@ def day_rank(update, context):
 def week_rank(update, context):
     chat_id = update.message.chat_id
     images_info = GetPixivImage.pixiv_rank('week')
-    message = update.message.text.split(' ')
-    page = 0
-    if len(message) > 1:
-        page = int(message[1])
-        if page < 0:
-            page = (page + 6) % 6
-        elif page > 0:
-            if page > 6:
-                dispatcher.bot.sendMessage(
-                    chat_id=chat_id,
-                    text='页数超过限制'
-                )
-                pass
-            page -= 1
-    send_photos(chat_id, images_info, page)
+    if images_info[0].get('message') is None:
+        message = update.message.text.split(' ')
+        page = 0
+        if len(message) > 1:
+            page = int(message[1])
+            if page < 0:
+                page = (page + 6) % 6
+            elif page > 0:
+                if page > 6:
+                    dispatcher.bot.sendMessage(
+                        chat_id=chat_id,
+                        text='页数超过限制'
+                    )
+                    pass
+                page -= 1
+        send_photos(chat_id, images_info, page)
+    else:
+        dispatcher.bot.sendMessage(
+            chat_id=chat_id,
+            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
+        )
 
 
 def month_rank(update, context):
     chat_id = update.message.chat_id
     images_info = GetPixivImage.pixiv_rank('month')
-    message = update.message.text.split(' ')
-    page = 0
-    if len(message) > 1:
-        page = int(message[1])
-        if page < 0:
-            page = (page + 6) % 6
-        elif page > 0:
-            if page > 6:
-                dispatcher.bot.sendMessage(
-                    chat_id=chat_id,
-                    text='页数超过限制'
-                )
-                pass
-            page -= 1
-    send_photos(chat_id, images_info, page)
+    if images_info[0].get('message') is None:
+        message = update.message.text.split(' ')
+        page = 0
+        if len(message) > 1:
+            page = int(message[1])
+            if page < 0:
+                page = (page + 6) % 6
+            elif page > 0:
+                if page > 6:
+                    dispatcher.bot.sendMessage(
+                        chat_id=chat_id,
+                        text='页数超过限制'
+                    )
+                    pass
+                page -= 1
+        send_photos(chat_id, images_info, page)
+    else:
+        dispatcher.bot.sendMessage(
+            chat_id=chat_id,
+            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
+        )
 
 
 def day_rank_r18(update, context):
     chat_id = update.message.chat_id
     images_info = GetPixivImage.pixiv_rank('day_r18')
-    message = update.message.text.split(' ')
-    page = 0
-    if len(message) > 1:
-        page = int(message[1])
-        if page < 0:
-            page = (page + 6) % 6
-        elif page > 0:
-            if page > 6:
-                dispatcher.bot.sendMessage(
-                    chat_id=chat_id,
-                    text='页数超过限制'
-                )
-                pass
-            page -= 1
-    send_photos(chat_id, images_info, page)
+    if images_info[0].get('message') is None:
+        message = update.message.text.split(' ')
+        page = 0
+        if len(message) > 1:
+            page = int(message[1])
+            if page < 0:
+                page = (page + 6) % 6
+            elif page > 0:
+                if page > 6:
+                    dispatcher.bot.sendMessage(
+                        chat_id=chat_id,
+                        text='页数超过限制'
+                    )
+                    pass
+                page -= 1
+        send_photos(chat_id, images_info, page)
+    else:
+        dispatcher.bot.sendMessage(
+            chat_id=chat_id,
+            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
+        )
 
 
 def week_rank_r18(update, context):
     chat_id = update.message.chat_id
     images_info = GetPixivImage.pixiv_rank('week_r18')
-    message = update.message.text.split(' ')
-    page = 0
-    if len(message) > 1:
-        page = int(message[1])
-        if page < 0:
-            page = (page + 6) % 6
-        elif page > 0:
-            if page > 6:
-                dispatcher.bot.sendMessage(
-                    chat_id=chat_id,
-                    text='页数超过限制'
-                )
-                pass
-            page -= 1
-    send_photos(chat_id, images_info, page)
+    if images_info[0].get('message') is None:
+        message = update.message.text.split(' ')
+        page = 0
+        if len(message) > 1:
+            page = int(message[1])
+            if page < 0:
+                page = (page + 6) % 6
+            elif page > 0:
+                if page > 6:
+                    dispatcher.bot.sendMessage(
+                        chat_id=chat_id,
+                        text='页数超过限制'
+                    )
+                    pass
+                page -= 1
+        send_photos(chat_id, images_info, page)
+    else:
+        dispatcher.bot.sendMessage(
+            chat_id=chat_id,
+            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
+        )
 
 
 def rank_r18g(update, context):
     chat_id = update.message.chat_id
     images_info = GetPixivImage.pixiv_rank('week_r18g')
-    message = update.message.text.split(' ')
-    page = 0
-    if len(message) > 1:
-        page = int(message[1])
-        if page < 0:
-            page = (page + 6) % 6
-        elif page > 0:
-            if page > 6:
-                dispatcher.bot.sendMessage(
-                    chat_id=chat_id,
-                    text='页数超过限制'
-                )
-                pass
-            page -= 1
-    send_photos(chat_id, images_info, page)
+    if images_info[0].get('message') is None:
+        message = update.message.text.split(' ')
+        page = 0
+        if len(message) > 1:
+            page = int(message[1])
+            if page < 0:
+                page = (page + 6) % 6
+            elif page > 0:
+                if page > 6:
+                    dispatcher.bot.sendMessage(
+                        chat_id=chat_id,
+                        text='页数超过限制'
+                    )
+                    pass
+                page -= 1
+        send_photos(chat_id, images_info, page)
+    else:
+        dispatcher.bot.sendMessage(
+            chat_id=chat_id,
+            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
+        )
 
 
 # 发送帮助
@@ -199,9 +270,8 @@ def send_photos(chat_id, image_list, page):
                         parse_mode='HTML'
                     )
             except Exception as e:
-                t = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
                 traceback.print_exc()
-                print('ERROR {}:在发送第 <b>{}</b> 张图片时发生错误\n错误信息：{}'.format(t, key + 1, e))
+                print('{}:"send_photos"在发送第 <b>{}</b> 张图片时发生错误\n错误信息：{}'.format(now_time, key + 1, e))
                 dispatcher.bot.sendMessage(
                     chat_id=chat_id,
                     text='在发送第 <b>{}</b> 张图片时发生错误\n错误信息：{}'.format(key + 1, e),
