@@ -350,7 +350,7 @@ def send_photos(chat_id, image_list, page):
 
 if __name__ == '__main__':
     now_time = Functions.get_time()
-    updater = Updater(token=TOKEN, request_kwargs={'proxy_url': 'http://127.0.0.1:11223/'})
+    updater = Updater(token=TOKEN)
 
     dispatcher = updater.dispatcher
     print('[{}]初始化成功'.format(now_time))
