@@ -11,7 +11,7 @@ def hitokoto():
     :return: {'content','source'}
     """
     now_time = Functions.get_time()
-    url = 'https://v1.hitokoto.cn?c=a&c=b&c=c&c=l'
+    url = 'https://international.v1.hitokoto.cn?c=a&c=b&c=c&c=l'
     yan = json.loads(requests.get(url).content)
     if yan.get('hitokoto') is None:
         response = {
