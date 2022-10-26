@@ -3,6 +3,7 @@ import traceback
 
 from telegram.ext import Updater, CommandHandler
 
+import Bangumi
 import Functions
 import GetPixivImage
 import Yiyan
@@ -52,6 +53,51 @@ def yan(update, context):
                 text='发送信息时出错：{}'.format(e)
             )
             print('[{}]"yan":发送信息失败{}'.format(now_time, e))
+
+
+def bangumi(update, context):
+    bangumi_str = ''
+    now_time = Functions.get_time()
+    chat_id = update.message.chat_id
+    message = update.message.text.split(' ')
+    if len(message) > 1:
+        bangumi_info = Bangumi.bangumi(int(message[1]))
+        for i in range(bangumi_info.get('num')):
+            bangumi_str = '{}\n{}'.format(bangumi_str, bangumi_info.get('bangumi')[i])
+        try:
+            dispatcher.bot.sendMessage(
+                chat_id=chat_id,
+                text='<b>{}({})</b>共有{}部番剧更新：{}'.format(
+                    bangumi_info.get('weekday_cn'),
+                    bangumi_info.get('weekday_jp'),
+                    bangumi_info.get('num'),
+                    bangumi_str),
+                parse_mode='HTML'
+            )
+            print('[{}]"bangumi":发送消息成功'.format(now_time))
+        except Exception as e:
+            print('[{}]"bangumi":发送消息时出现错误：{}'.format(now_time, e))
+    else:
+        bangumi_info = Bangumi.bangumi()
+        for i in range(bangumi_info.get('num')):
+            bangumi_str = '{}\n{}'.format(bangumi_str, bangumi_info.get('bangumi')[i])
+        try:
+            dispatcher.bot.sendMessage(
+                chat_id=chat_id,
+                text='今天是<b>{}({})</b>，共有{}部番剧更新：{}'.format(
+                    bangumi_info.get('weekday_cn'),
+                    bangumi_info.get('weekday_jp'),
+                    bangumi_info.get('num'),
+                    bangumi_str),
+                parse_mode='HTML'
+            )
+            print('[{}]"bangumi":发送消息成功'.format(now_time))
+        except Exception as e:
+            print('[{}]"bangumi":发送消息时出现错误：{}'.format(now_time, e))
+            dispatcher.bot.sendMessage(
+                chat_id=chat_id,
+                text='发送消息时出现错误{}'.format(e)
+            )
 
 
 def sese(update, context):
@@ -357,6 +403,7 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("yan", yan))
+    dispatcher.add_handler(CommandHandler("bangumi", bangumi))
     dispatcher.add_handler(CommandHandler("sese", sese))
     dispatcher.add_handler(CommandHandler("day_rank", day_rank))
     dispatcher.add_handler(CommandHandler("week_rank", week_rank))

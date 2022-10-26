@@ -28,7 +28,7 @@ def pixiv_rank(rank_type):
     week_r18g: R18G
 
     :param rank_type: 想要获取的排行榜类型
-    :return: [{'pid','title','username','url','num'},{},...]
+    :return: [{'pid':[int], 'title':[str], 'username':[str], 'url':[str], 'num':[int]},{},...]
     """
     now_time = Functions.get_time()
     resp_list = []
@@ -58,7 +58,7 @@ def pixiv_rank(rank_type):
 def random_pic():
     """获取随机Pixiv图片
 
-    :return: {'pid','title','username','url','num'}
+    :return: {'pid':[int] ,'title':[str], 'username':[str], 'url':[str], 'num':[int}}
     """
     now_time = Functions.get_time()
     tags_url = 'https://api.obfs.dev/api/pixiv/tags'
@@ -95,7 +95,7 @@ def pic_info(pic_json, key):
 
     :param pic_json: Json格式返回的图片信息
     :param key: 获取返回的信息中的第key张图片
-    :return: {'pid','title','username','url','num'}
+    :return: {'pid':[int] ,'title':[str], 'username':[str], 'url':[str], 'num':[int}}
     """
     now_time = Functions.get_time()
     pic_list = pic_json.get('illusts')
