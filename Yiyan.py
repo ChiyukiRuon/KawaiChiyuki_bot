@@ -8,7 +8,7 @@ import Functions
 def hitokoto():
     """一言二次元语录
 
-    :return: {'content','source'}
+    :return: {'content':[str], 'source':[str]}
     """
     now_time = Functions.get_time()
     url = 'https://v1.hitokoto.cn?c=a&c=b&c=c&c=l'
