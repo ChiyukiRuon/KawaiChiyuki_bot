@@ -20,11 +20,13 @@ def bangumi(*args):
     month = time_list[1]
     day = time_list[2].split(' ')[0]
     today = datetime.date(int(year), int(month), int(day)).weekday()
+
     headers = {
         'User-Agent': 'ChiyukiRuon/KawaiChiyuki_bot(https://github.com/ChiyukiRuon/KawaiChiyuki_bot)'
     }
     url = 'https://api.bgm.tv/calendar'
     r = requests.get(url, headers)
+
     if len(args) == 0:
         content = json.loads(r.content)[today]
         weekday_cn = content.get('weekday').get('cn')
@@ -40,6 +42,7 @@ def bangumi(*args):
             'bangumi': bangumi_list,
             'num': len(bangumi_list)
         }
+
         print('[{}]"bangumi":获取到番剧信息{}'.format(now_time, response))
     elif len(args) == 1:
         content = json.loads(r.content)[args[0] - 1]
@@ -56,12 +59,14 @@ def bangumi(*args):
             'bangumi': bangumi_list,
             'num': len(bangumi_list)
         }
+
         print('[{}]"bangumi":获取到番剧信息{}'.format(now_time, response))
     else:
         response = {
             'weekday_cn': now_time,
             'message': '参数输入错误'
         }
+
         print('[{}]"bangumi":获取番剧信息时遇到错误{}'.format(now_time, response))
 
     return response

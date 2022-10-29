@@ -17,14 +17,17 @@ def hitokoto():
         response = {
             'message': '获取一言失败'
         }
+
         print('[{}]"hitokoto":获取一言失败'.format(now_time))
     else:
         content = yan.get('hitokoto')
         source = yan.get('from')
+
         response = {
             'content': content,
             'source': source
         }
+
         print('[{}]"hitokoto":获取一言成功{}'.format(now_time, response))
 
     return response
