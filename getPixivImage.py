@@ -3,7 +3,7 @@ import random
 
 import requests
 
-import Functions
+import bot
 
 
 def pixiv_rank(rank_type):
@@ -30,13 +30,13 @@ def pixiv_rank(rank_type):
     :param rank_type: 想要获取的排行榜类型
     :return: [{'pid':[int], 'title':[str], 'username':[str], 'url':[str], 'num':[int]},{},...]
     """
-    now_time = Functions.get_time()
+    now_time = bot.get_time()
     resp_list = []
     url = 'https://api.obfs.dev/api/pixiv/rank?mode={}'.format(rank_type)
     try:
         pic_json = json.loads(requests.get(url).content)
     except Exception as e:
-        print('[{}]"pixiv_rank":获取图片信息失败{}'.format(now_time, e))
+        bot.log_output('"pixiv_rank":获取图片信息失败{}'.format(e))
 
         resp_list = [
             {
@@ -61,14 +61,14 @@ def random_pic():
 
     :return: {'pid':[int] ,'title':[str], 'username':[str], 'url':[str], 'num':[int}}
     """
-    now_time = Functions.get_time()
+    now_time = bot.get_time()
     tags_url = 'https://api.obfs.dev/api/pixiv/tags'
     search_url = 'https://api.obfs.dev/api/pixiv/search?word='
     user = ['1000', '3000', '5000', '7500', '10000', '30000', '50000']  # 搜索时用到的热度关键词
     try:
         tag_list = json.loads(requests.get(tags_url).content).get('trend_tags')    # 获取当前Pixiv的热门tag
     except Exception as e:
-        print('[{}]"random_pic":获取图片信息失败{}'.format(now_time, e))
+        bot.log_output('"random_pic":获取图片信息失败{}'.format(e))
 
         response = {
             'message': '获取图片信息失败{}'.format(e)
@@ -84,20 +84,20 @@ def random_pic():
             # 搜索并拿到json格式的结果
             pic_json = json.loads(requests.get(search_url + tag + ' ' + rand_user + 'users入り').content)
 
-            print('[{}]"random_pic":tag:{},user:{}'.format(now_time, tag, rand_user))
+            bot.log_output('"random_pic":尝试使用tag:{},user:{}获取图片'.format(tag, rand_user))
 
             # 从搜索结果中随机拿出一张图片
             rand_pic = random.randint(0, 29)
             response = pic_info(pic_json, rand_pic)
 
-            print('[{}]"random_pic":resp:{}'.format(now_time, response))
+            bot.log_output('"random_pic":resp:{}'.format(response))
 
             # 如果成功拿到图片信息就跳出循环，否则重复上述步骤直至成功
             if len(response) != 0:
                 break
 
         except Exception as e:
-            print('[{}]"random_pic":{}'.format(now_time, e))
+            bot.log_output('"random_pic":获取图片信息时发生错误{}，重试'.format(e))
 
     return response
 
@@ -109,12 +109,12 @@ def pic_info(pic_json, key):
     :param key: 获取返回的信息中的第key张图片
     :return: {'pid':[int] ,'title':[str], 'username':[str], 'url':[str], 'num':[int}}
     """
-    now_time = Functions.get_time()
+    now_time = bot.get_time()
     pic_list = pic_json.get('illusts')
     # 判断是否成功获取到排行榜的图片
     if pic_list is None:    # 获取失败
         msg = pic_json.get('error').get('message')
-        print('[{}]"pic_info":获取图片时发生错误{}'.format(now_time, msg))
+        bot.log_output('"pic_info":获取图片时发生错误{}'.format(msg))
         response = {
             'message': msg
         }
