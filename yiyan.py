@@ -2,7 +2,7 @@ import json
 
 import requests
 
-import Functions
+import bot
 
 
 def hitokoto():
@@ -10,15 +10,16 @@ def hitokoto():
 
     :return: {'content':[str], 'source':[str]}
     """
-    now_time = Functions.get_time()
     url = 'https://international.v1.hitokoto.cn?c=a&c=b&c=c&c=l'
     yan = json.loads(requests.get(url).content)
+
     if yan.get('hitokoto') is None:
         response = {
             'message': '获取一言失败'
         }
 
-        print('[{}]"hitokoto":获取一言失败'.format(now_time))
+        bot.log_output('"hitokoto":获取一言失败')
+
     else:
         content = yan.get('hitokoto')
         source = yan.get('from')
@@ -28,6 +29,6 @@ def hitokoto():
             'source': source
         }
 
-        print('[{}]"hitokoto":获取一言成功{}'.format(now_time, response))
+        bot.log_output('"hitokoto":获取一言成功{}'.format(response))
 
     return response
