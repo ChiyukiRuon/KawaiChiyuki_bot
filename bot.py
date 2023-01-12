@@ -1,9 +1,8 @@
 import os
-import traceback
 import datetime
 import pytz
 
-from telegram import InlineKeyboardButton
+from telegram import InlineKeyboardButton, InputMediaPhoto
 from telegram import InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
@@ -178,6 +177,7 @@ def sese(update, context):
     log_output('"sese":获取到图片信息：{}'.format(pic_info))
 
     markup = InlineKeyboardMarkup([[InlineKeyboardButton('查看来源页面','https://www.pixiv.net/artworks/{}'.format(pic_info.get('pid')))]])
+    # markup = InlineKeyboardMarkup([[InlineKeyboardButton('查看来源页面', None, 'test?{}'.format(pic_info.get('username')))]])
 
     try:
         # 判断投稿内的作品数量，用不同的格式发送
@@ -210,7 +210,6 @@ def sese(update, context):
             dispatcher.bot.sendMessage(
                 chat_id=chat_id,
                 text='获取图片时发生错误：{}'.format(pic_info.get('message')),
-                reply_markup=markup
             )
 
             message_log(now_time, chat_info, received, False, pic_info.get('message'))
@@ -218,7 +217,7 @@ def sese(update, context):
         if pic_info.get('message') is None:
             dispatcher.bot.sendMessage(
                 chat_id=chat_id,
-                text='发送图片时出现错误：{}'.format(e),
+                text='发送图片时出现错误：{}\n如果要查看未成功发送的图片，可以尝试查看来源页面'.format(e),
                 parse_mode='HTML',
                 reply_markup=markup
             )
@@ -228,7 +227,6 @@ def sese(update, context):
             dispatcher.bot.sendMessage(
                 chat_id=chat_id,
                 text='获取图片时发生错误：{}'.format(pic_info.get('message')),
-                reply_markup=markup
             )
 
             message_log(now_time, chat_info, received, False, pic_info.get('message'))
@@ -248,36 +246,26 @@ def day_rank(update, context):
     except Exception as e:
         log_output('"day_rank":发送消息时遇到错误{}'.format(e))
 
-    images_info = getPixivImage.pixiv_rank('day')
-    # 判断是否获取到了图片信息
-    if images_info[0].get('message') is None:   # 成功获取图片信息
-        message = update.message.text.split(' ')
-        page = 0    # 设置默认页数
-        # 判断是否指定了页数
-        if len(message) > 1:
-            page = int(message[1])
-            # 判断输入的页数是否合法
-            if -6 < page < 0:
-                page = (page + 6) % 6
-            elif page > 0:
-                if page > 6:
-                    dispatcher.bot.sendMessage(
-                        chat_id=chat_id,
-                        text='页数超过限制'
-                    )
-                    pass
-                page -= 1
+    message = update.message.text.split(' ')
 
-        send_photos(chat_id, images_info, page)
+    if len(message) > 1:
 
-        message_log(now_time, chat_info, received, True)
-    else:   # 获取图片信息失败
-        dispatcher.bot.sendMessage(
-            chat_id=chat_id,
-            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
-        )
+        page = int(message[1])
 
-        message_log(now_time, chat_info, received, False, images_info[0].get('message'))
+        if 1 <= page <= 30:
+            page = page
+        elif -30 <= page <= -1:
+            page = page + 31
+        else:
+            update.message.reply_text('输入的数字超出了限制，请输入1~30或-30~-1间的整数')
+            log_output('输入的数字超出了限制,返回警告')
+            return
+
+        send_photos(chat_id, 'day', page - 1)
+
+    else:
+
+        send_photos(chat_id, 'day', 0)
 
 
 # Pixiv周榜
@@ -294,33 +282,26 @@ def week_rank(update, context):
     except Exception as e:
         message_log(now_time, chat_info, received, False, e)
 
-    images_info = getPixivImage.pixiv_rank('week')
-    if images_info[0].get('message') is None:
-        message = update.message.text.split(' ')
-        page = 0
-        if len(message) > 1:
-            page = int(message[1])
-            if -6 < page < 0:
-                page = (page + 6) % 6
-            elif page > 0:
-                if page > 6:
-                    dispatcher.bot.sendMessage(
-                        chat_id=chat_id,
-                        text='页数超过限制'
-                    )
-                    pass
-                page -= 1
+    message = update.message.text.split(' ')
 
-        send_photos(chat_id, images_info, page)
+    if len(message) > 1:
 
-        message_log(now_time, chat_info, received, True)
+        page = int(message[1])
+
+        if 1 <= page <= 30:
+            page = page
+        elif -30 <= page <= -1:
+            page = page + 31
+        else:
+            update.message.reply_text('输入的数字超出了限制，请输入1~30或-30~-1间的整数')
+            log_output('输入的数字超出了限制,返回警告')
+            return
+
+        send_photos(chat_id, 'week', page - 1)
+
     else:
-        dispatcher.bot.sendMessage(
-            chat_id=chat_id,
-            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
-        )
 
-        message_log(now_time, chat_info, received, False, images_info[0].get('message'))
+        send_photos(chat_id, 'week', 0)
 
 
 # Pixiv月榜
@@ -337,33 +318,26 @@ def month_rank(update, context):
     except Exception as e:
         message_log(now_time, chat_info, received, False, e)
 
-    images_info = getPixivImage.pixiv_rank('month')
-    if images_info[0].get('message') is None:
-        message = update.message.text.split(' ')
-        page = 0
-        if len(message) > 1:
-            page = int(message[1])
-            if -6 < page < 0:
-                page = (page + 6) % 6
-            elif page > 0:
-                if page > 6:
-                    dispatcher.bot.sendMessage(
-                        chat_id=chat_id,
-                        text='页数超过限制'
-                    )
-                    pass
-                page -= 1
+    message = update.message.text.split(' ')
 
-        send_photos(chat_id, images_info, page)
+    if len(message) > 1:
 
-        message_log(now_time, chat_info, received, True)
+        page = int(message[1])
+
+        if 1 <= page <= 30:
+            page = page
+        elif -30 <= page <= -1:
+            page = page + 31
+        else:
+            update.message.reply_text('输入的数字超出了限制，请输入1~30或-30~-1间的整数')
+            log_output('输入的数字超出了限制,返回警告')
+            return
+
+        send_photos(chat_id, 'month', page - 1)
+
     else:
-        dispatcher.bot.sendMessage(
-            chat_id=chat_id,
-            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
-        )
 
-        message_log(now_time, chat_info, received, False, images_info[0].get('message'))
+        send_photos(chat_id, 'month', 0)
 
 
 # Pixiv R18日榜
@@ -380,33 +354,26 @@ def day_rank_r18(update, context):
     except Exception as e:
         message_log(now_time, chat_info, received, False, e)
 
-    images_info = getPixivImage.pixiv_rank('day_r18')
-    if images_info[0].get('message') is None:
-        message = update.message.text.split(' ')
-        page = 0
-        if len(message) > 1:
-            page = int(message[1])
-            if -6 < page < 0:
-                page = (page + 6) % 6
-            elif page > 0:
-                if page > 6:
-                    dispatcher.bot.sendMessage(
-                        chat_id=chat_id,
-                        text='页数超过限制'
-                    )
-                    pass
-                page -= 1
+    message = update.message.text.split(' ')
 
-        send_photos(chat_id, images_info, page)
+    if len(message) > 1:
 
-        message_log(now_time, chat_info, received, True)
+        page = int(message[1])
+
+        if 1 <= page <= 30:
+            page = page
+        elif -30 <= page <= -1:
+            page = page + 31
+        else:
+            update.message.reply_text('输入的数字超出了限制，请输入1~30或-30~-1间的整数')
+            log_output('输入的数字超出了限制,返回警告')
+            return
+
+        send_photos(chat_id, 'month', page - 1)
+
     else:
-        dispatcher.bot.sendMessage(
-            chat_id=chat_id,
-            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
-        )
 
-        message_log(now_time, chat_info, received, False, images_info[0].get('message'))
+        send_photos(chat_id, 'month', 0)
 
 
 # Pixiv R18周榜
@@ -423,33 +390,26 @@ def week_rank_r18(update, context):
     except Exception as e:
         message_log(now_time, chat_info, received, False, e)
 
-    images_info = getPixivImage.pixiv_rank('week_r18')
-    if images_info[0].get('message') is None:
-        message = update.message.text.split(' ')
-        page = 0
-        if len(message) > 1:
-            page = int(message[1])
-            if -6 < page < 0:
-                page = (page + 6) % 6
-            elif page > 0:
-                if page > 6:
-                    dispatcher.bot.sendMessage(
-                        chat_id=chat_id,
-                        text='页数超过限制'
-                    )
-                    pass
-                page -= 1
+    message = update.message.text.split(' ')
 
-        send_photos(chat_id, images_info, page)
+    if len(message) > 1:
 
-        message_log(now_time, chat_info, received, True)
+        page = int(message[1])
+
+        if 1 <= page <= 30:
+            page = page
+        elif -30 <= page <= -1:
+            page = page + 31
+        else:
+            update.message.reply_text('输入的数字超出了限制，请输入1~30或-30~-1间的整数')
+            log_output('输入的数字超出了限制,返回警告')
+            return
+
+        send_photos(chat_id, 'week_r18', page - 1)
+
     else:
-        dispatcher.bot.sendMessage(
-            chat_id=chat_id,
-            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
-        )
 
-        message_log(now_time, chat_info, received, False, images_info[0].get('message'))
+        send_photos(chat_id, 'week_r18', 0)
 
 
 # Pixiv R18G排行榜
@@ -466,33 +426,26 @@ def rank_r18g(update, context):
     except Exception as e:
         message_log(now_time, chat_info, received, False, e)
 
-    images_info = getPixivImage.pixiv_rank('week_r18g')
-    if images_info[0].get('message') is None:
-        message = update.message.text.split(' ')
-        page = 0
-        if len(message) > 1:
-            page = int(message[1])
-            if -6 < page < 0:
-                page = (page + 6) % 6
-            elif page > 0:
-                if page > 6:
-                    dispatcher.bot.sendMessage(
-                        chat_id=chat_id,
-                        text='页数超过限制'
-                    )
-                    pass
-                page -= 1
+    message = update.message.text.split(' ')
 
-        send_photos(chat_id, images_info, page)
+    if len(message) > 1:
 
-        message_log(now_time, chat_info, received, True)
+        page = int(message[1])
+
+        if 1 <= page <= 30:
+            page = page
+        elif -30 <= page <= -1:
+            page = page + 31
+        else:
+            update.message.reply_text('输入的数字超出了限制，请输入1~30或-30~-1间的整数')
+            log_output('输入的数字超出了限制,返回警告')
+            return
+
+        send_photos(chat_id, 'week_r18g', page - 1)
+
     else:
-        dispatcher.bot.sendMessage(
-            chat_id=chat_id,
-            text='获取图片时发生错误：{}'.format(images_info[0].get('message'))
-        )
 
-        message_log(now_time, chat_info, received, False, images_info[0].get('message'))
+        send_photos(chat_id, 'week_r18g', 0)
 
 
 # 获取帮助
@@ -558,6 +511,8 @@ def query_func(update, context):
     query.answer()
     query_data = query.data
 
+    log_output('内联按钮返回值：{}'.format(query_data))
+
     try:
 
         if query_data == 'pixiv':
@@ -596,6 +551,58 @@ def query_func(update, context):
                                                    [InlineKeyboardButton('一言', None, 'yiyan')],
                                                    ])
             )
+        elif query_data.split('?')[0] == 'prev' or query_data.split('?')[0] == 'next':
+            currt_page = int(query_data.split('?')[2])
+            rank_type = query_data.split('?')[1]
+
+            if query_data.split('?')[0] == 'prev':
+                page = currt_page - 1
+            else:
+                page = currt_page + 1
+
+            if page < 0 or page >= 30:page = (page + 30) % 30
+
+            image_list = getPixivImage.pixiv_rank(rank_type)
+
+            try:
+                if image_list[page].get('num') > 1:
+                    query.edit_message_media(
+                        media=InputMediaPhoto(
+                            media=image_list[page].get('url'),
+                            caption='以及{}张图片\n排行榜类型：{}\n标题：{}\n作者：{}'.format(
+                                image_list[page].get('num') - 1,
+                                rank_type,
+                                image_list[page].get('title'),
+                                image_list[page].get('username'))
+                        ),
+                        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('上一个', None, 'prev?{}?{}'.format(rank_type, page)),
+                                                            InlineKeyboardButton('下一个', None, 'next?{}?{}'.format(rank_type, page))],
+                                                            [InlineKeyboardButton('查看来源页面', 'https://www.pixiv.net/artworks/{}'.format(image_list[page].get('pid')))]])
+                    )
+                else:
+                    query.edit_message_media(
+                        media=InputMediaPhoto(
+                            media=image_list[page].get('url'),
+                            caption='排行榜类型：{}\n标题：{}\n作者：{}'.format(
+                                rank_type,
+                                image_list[page].get('title'),
+                                image_list[page].get('username'))
+                        ),
+                        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('上一个', None, 'prev?{}?{}'.format(rank_type, page)),
+                                                            InlineKeyboardButton('下一个', None, 'next?{}?{}'.format(rank_type, page))],
+                                                            [InlineKeyboardButton('查看来源页面', 'https://www.pixiv.net/artworks/{}'.format(image_list[page].get('pid')))]])
+                    )
+            except Exception as e:
+                query.edit_message_caption(
+                    caption='排行榜类型：{}\n加载第{}张图片时发生了错误\n错误原因：{}\n如果要查看未成功更新的图片，可以尝试查看来源页面'.format(rank_type, page + 1, e),
+                    reply_markup=InlineKeyboardMarkup(
+                        [[InlineKeyboardButton('上一个', None, 'prev?{}?{}'.format(rank_type, page)),
+                          InlineKeyboardButton('下一个', None, 'next?{}?{}'.format(rank_type, page))],
+                         [InlineKeyboardButton('查看来源页面', 'https://www.pixiv.net/artworks/{}'.format(
+                             image_list[page].get('pid')))]])
+                )
+
+                log_output('更新图片时出现错误：{}'.format(e))
 
         elif 1<= int(query_data) <= 7:
             bangumi_str = ''
@@ -623,56 +630,59 @@ def query_func(update, context):
 
         log_output('更新消息成功')
     except Exception as e:
-        log_output('更新消息时出现错误{}'.format(e))
+        log_output('更新消息时出现错误：{}'.format(e))
 
 
-def send_photos(chat_id, image_list, page):
-    now_time = get_time()
-    try:
-        # 准备遍历获取图片信息
-        for key in range(len(image_list)):
-            # 控制遍历的范围
-            if page*5 <= key < (page + 1)*5:
-                try:
-                    if image_list[key].get('num') > 1:
-                        dispatcher.bot.sendPhoto(
-                            chat_id=chat_id,
-                            photo=image_list[key].get('url'),
-                            caption='以及{}张图片\nNo.{}\n标题：{}\n作者：{}\n<a href="https://www.pixiv.net/artworks/{}">原图链接</a>'.format(
-                                image_list[key].get('num') - 1,
-                                key + 1,
-                                image_list[key].get('title'),
-                                image_list[key].get('username'),
-                                image_list[key].get('pid')),
-                            parse_mode='HTML'
-                        )
-                    else:
-                        dispatcher.bot.sendPhoto(
-                            chat_id=chat_id,
-                            photo=image_list[key].get('url'),
-                            caption='No.{}\n标题：{}\n作者：{}\n<a href="https://www.pixiv.net/artworks/{}">原图链接</a>'.format(
-                                key + 1,
-                                image_list[key].get('title'),
-                                image_list[key].get('username'),
-                                image_list[key].get('pid')),
-                            parse_mode='HTML'
-                        )
-                except Exception as e:
-                    traceback.print_exc()
-                    log_output('"send_photos":在发送第 <b>{}</b> 张图片时发生错误,错误信息：{}'.format(key + 1, e))
-                    dispatcher.bot.sendMessage(
-                        chat_id=chat_id,
-                        text='在发送第 <b>{}</b> 张图片时发生错误\n错误信息：{}'.format(key + 1, e),
-                        parse_mode='HTML'
-                    )
-            elif key > (page + 1)*5 - 1:
-                break
-    except Exception as e:
-        log_output('"send_photos":获取图片时发生错误{}'.format(e))
+def send_photos(chat_id, rank_type, page):
+    image_list = getPixivImage.pixiv_rank(rank_type)
+
+    if image_list[0].get('message') is None:
+
+        markup = InlineKeyboardMarkup([[InlineKeyboardButton('上一个', None, 'prev?{}?{}'.format(rank_type, page)),
+                                        InlineKeyboardButton('下一个', None, 'next?{}?{}'.format(rank_type, page))],
+                                       [InlineKeyboardButton('查看来源页面', 'https://www.pixiv.net/artworks/{}'.format(image_list[page].get('pid')))]
+                                       ])
+
+        try:
+            if image_list[page].get('num') > 1:
+                dispatcher.bot.sendPhoto(
+                    chat_id=chat_id,
+                    photo=image_list[page].get('url'),
+                    caption='以及{}张图片\n排行榜类型：{}\n标题：{}\n作者：{}'.format(
+                        image_list[page].get('num') - 1,
+                        rank_type,
+                        image_list[page].get('title'),
+                        image_list[page].get('username')),
+                    reply_markup=markup
+                )
+            else:
+                dispatcher.bot.sendPhoto(
+                    chat_id=chat_id,
+                    photo=image_list[page].get('url'),
+                    caption='排行榜类型：{}\n标题：{}\n作者：{}'.format(
+                        rank_type,
+                        image_list[page].get('title'),
+                        image_list[page].get('username')),
+                    reply_markup=markup
+                )
+        except Exception as e:
+            dispatcher.bot.sendPhoto(
+                chat_id=chat_id,
+                photo=open('./res/images/bang.jpg', 'rb'),
+                caption='排行榜类型：{}\n在发送图片时发生错误\n错误信息：{}\n如果要查看未成功发送的图片，可以尝试查看来源页面'.format(rank_type, e),
+                reply_markup=markup
+            )
+
+            log_output('"send_photos":在发送第{}张图片时发生错误,错误信息：{}'.format(page + 1, e))
+
+    else:
+
         dispatcher.bot.sendMessage(
             chat_id=chat_id,
-            text='获取图片时发生错误：{}'.format(e)
+            text='获取图片信息失败\n错误信息：{}'.format(image_list[0].get('message'))
         )
+
+        log_output('"send_photos":获取图片信息失败{}'.format(image_list[0].get('message')))
 
 
 def get_time():
@@ -702,35 +712,35 @@ def message_log(*args):
         if len(args) == 3:
             # receive_message
             if chat_info.username is None:
-                _from = chat_info.title
+                msg_src = chat_info.title
 
-                log_info = '"{}":收到来自群组<{}>的消息<{}>'.format(command, _from, received)
+                log_info = '"{}":收到来自群组<{}>的消息<{}>'.format(command, msg_src, received)
             else:
-                _from = '{} {}(id:{})'.format(chat_info.first_name, chat_info.last_name, chat_info.id)
+                msg_src = '{} {}(id:{})'.format(chat_info.first_name, chat_info.last_name, chat_info.id)
 
-                log_info = '"{}":收到来自用户<{}>的消息'.format(command, _from, received)
+                log_info = '"{}":收到来自用户<{}>的消息'.format(command, msg_src, received)
         elif 4 <= len(args) <= 5:
             # send_message
             send_state = args[3]
             if send_state:
                 if chat_info.username is None:
-                    _from = chat_info.title
+                    msg_src = chat_info.title
 
-                    log_info = '"{}":成功向群组<{}>发送消息消息'.format(command, _from)
+                    log_info = '"{}":成功向群组<{}>发送消息消息'.format(command, msg_src)
                 else:
-                    _from = '{} {}(id:{})'.format(chat_info.first_name, chat_info.last_name, chat_info.id)
+                    msg_src = '{} {}(id:{})'.format(chat_info.first_name, chat_info.last_name, chat_info.id)
 
-                    log_info = '"{}":成功向用户<{}>发送消息'.format(command, _from)
+                    log_info = '"{}":成功向用户<{}>发送消息'.format(command, msg_src)
             else:
                 err_info = args[4]
                 if chat_info.username is None:
-                    _from = chat_info.title
+                    msg_src = chat_info.title
 
-                    log_info = '"{}":向群组<{}>发送消息时出现错误{}'.format(command, _from, err_info)
+                    log_info = '"{}":向群组<{}>发送消息时出现错误{}'.format(command, msg_src, err_info)
                 else:
-                    _from = '{} {}(id:{})'.format(chat_info.first_name, chat_info.last_name, chat_info.id)
+                    msg_src = '{} {}(id:{})'.format(chat_info.first_name, chat_info.last_name, chat_info.id)
 
-                    log_info = '"{}":向用户<{}>发送消息时出现错误{}'.format(command, _from, err_info)
+                    log_info = '"{}":向用户<{}>发送消息时出现错误{}'.format(command, msg_src, err_info)
         else:
             # error
             log_info = '"message_log":传入参数错误,数量应为3个或4个'

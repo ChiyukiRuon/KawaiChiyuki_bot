@@ -5,9 +5,14 @@ import requests
 
 import bot
 
+api_list = [
+    'https://api.obfs.dev/api/pixiv/',
+    'https://api.imki.moe/api/pixiv/'
+]
 
-def pixiv_rank(rank_type):
-    """获取Pixiv排行榜图片,总共获取50张
+
+def pixiv_rank(*args):
+    """获取Pixiv排行榜图片,总共获取30张
 
     day: 日榜;
 
@@ -28,54 +33,106 @@ def pixiv_rank(rank_type):
     week_r18g: R18G
 
     :param rank_type: 想要获取的排行榜类型
+    :param api_no: 可选，选择API
     :return: [{'pid':[int], 'title':[str], 'username':[str], 'url':[str], 'num':[int]},{},...]
     """
-    now_time = bot.get_time()
+    rank_type = args[0]
     resp_list = []
-    url = 'https://api.obfs.dev/api/pixiv/rank?mode={}'.format(rank_type)
+
+    api = api_list[0]
+    if len(args) > 1 and args[1] < len(api_list): api = api_list[args[1]]
+    bot.log_output('"pixiv_rank":使用API-{}进行搜索'.format(api))
+
+    url = '{}rank?mode={}'.format(api, rank_type)
     try:
         pic_json = json.loads(requests.get(url).content)
     except Exception as e:
         bot.log_output('"pixiv_rank":获取图片信息失败{}'.format(e))
 
-        resp_list = [
-            {
-                'message': e
-            }
-        ]
+        if len(args) == 1:
+            bot.log_output('"pixiv_rank":获取图片信息失败，更换API')
+
+            resp_list = pixiv_rank(rank_type, 1)
+        else:
+            bot.log_output('"pixiv_rank":获取图片信息失败，放弃')
+
+            resp_list = [
+                {
+                    'message': e
+                }
+            ]
+
         return resp_list
     pic_list = pic_json.get('illusts')
+
     if pic_list is None:
+
         resp_list = [pic_info(pic_json, 1)]
+
+    elif len(pic_list) == 0:
+
+        if len(args) == 1:
+            bot.log_output('"pixiv_rank":获取到的图片信息为空，更换API')
+
+            resp_list = pixiv_rank(rank_type, 1)
+        else:
+            bot.log_output('"pixiv_rank":获取到的图片信息仍为空，放弃')
+
+            resp_list = [
+                {
+                    'message': '获取到的图片信息为空'
+                }
+            ]
+
+        return resp_list
+
     else:
+
         for i in range(len(pic_list)):
             response = pic_info(pic_json, i)
 
             resp_list.append(response)
 
+    bot.log_output('"pixiv_rank":返回的图片数据{}'.format(resp_list))
+
     return resp_list
 
 
-def random_pic():
+def random_pic(*args):
     """获取随机Pixiv图片
 
-    :return: {'pid':[int] ,'title':[str], 'username':[str], 'url':[str], 'num':[int}}
+    :param api_no: 可选，选择API
+    :return {'pid':[int] ,'title':[str], 'username':[str], 'url':[str], 'num':[int}}
     """
-    now_time = bot.get_time()
-    tags_url = 'https://api.obfs.dev/api/pixiv/tags'
-    search_url = 'https://api.obfs.dev/api/pixiv/search?word='
+    api = api_list[0]
+    if len(args) == 1 and args[0] < len(api_list): api = api_list[args[1]]
+
+    bot.log_output('"random_pic":使用API-{}进行搜索'.format(api))
+
+    tags_url = '{}tags'.format(api)
+    search_url = '{}search?word='.format(api)
     user = ['1000', '3000', '5000', '7500', '10000', '30000', '50000']  # 搜索时用到的热度关键词
     try:
         tag_list = json.loads(requests.get(tags_url).content).get('trend_tags')    # 获取当前Pixiv的热门tag
     except Exception as e:
-        bot.log_output('"random_pic":获取图片信息失败{}'.format(e))
+        if len(args) == 1:
+            bot.log_output('"random_pic":获取图片信息失败{}'.format(e))
 
-        response = {
-            'message': '获取图片信息失败{}'.format(e)
-        }
+            response = {
+                'message': '获取图片信息失败{}'.format(e)
+            }
 
-        return response
+            return response
+        else:
+            bot.log_output('"random_pic":获取图片信息失败{},更换API'.format(e))
+
+            response = random_pic(1)
+
+            return response
+
+    count = 0
     while True:
+        count += 1
         try:
             rand_user = user[random.randint(0, 6)]  # 随机一个热度标签
             # 随机获取一个热门tag
@@ -92,12 +149,22 @@ def random_pic():
 
             bot.log_output('"random_pic":resp:{}'.format(response))
 
-            # 如果成功拿到图片信息就跳出循环，否则重复上述步骤直至成功
-            if len(response) != 0:
+            # 如果成功拿到图片信息就跳出循环，总计重复6次上述步骤跳出循环
+            if len(response) == 0 and count == 3 and len(args) == 0:
+                bot.log_output('"random_pic":获取图片信息失败,切换API')
+                count = 0
+
+                response = random_pic(1)
+
+                return response
+            elif len(response) == 0 and count == 3 and len(args) == 1:
+                bot.log_output('"random_pic":获取图片信息失败')
                 break
+            elif len(response) != 0 and count <= 6:
+                return response
 
         except Exception as e:
-            bot.log_output('"random_pic":获取图片信息时发生错误{}，重试'.format(e))
+            bot.log_output('"random_pic":获取图片信息时发生错误{}，重试{}/6'.format(e, count))
 
     return response
 
