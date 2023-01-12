@@ -766,9 +766,7 @@ def log_output(log_info):
 
 
 if __name__ == '__main__':
-    updater = Updater(token=TOKEN, request_kwargs={
-        'proxy_url': 'socks5h://127.0.0.1:11223/'
-    })
+    updater = Updater(token=TOKEN)
 
     dispatcher = updater.dispatcher
     log_output('-----------------初始化成功-----------------')
