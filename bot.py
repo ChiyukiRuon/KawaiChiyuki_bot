@@ -16,13 +16,12 @@ TOKEN = os.getenv("TOKEN")
 # 打招呼
 def start(update, context):
     # 获取必要信息
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
     # 输出接受消息的日志
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         # 发送消息
@@ -33,7 +32,7 @@ def start(update, context):
         )
 
         # 输出发送消息成功的日志
-        message_log(now_time, chat_info, received, True)
+        message_log(chat_info, received, True)
     except Exception as e:
         # 发送消息失败
         dispatcher.bot.sendMessage(
@@ -42,22 +41,21 @@ def start(update, context):
         )
 
         # 输出发送消息失败的日志
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
 
 # 一言二次元语录
 def yan(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         update.message.reply_text('收到消息，正在处理中')
     except Exception as e:
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
     yan_info = yiyan.hitokoto()    # 获取到的一言信息
     if yan_info.get('content') is None:
@@ -66,7 +64,7 @@ def yan(update, context):
             text='获取一言时出错'
         )
 
-        message_log(now_time, chat_info, received, False, '获取一言失败')
+        message_log(chat_info, received, False, '获取一言失败')
     else:
         try:
             dispatcher.bot.sendMessage(
@@ -75,25 +73,24 @@ def yan(update, context):
                 parse_mode='HTML'
             )
 
-            message_log(now_time, chat_info, received, True)
+            message_log(chat_info, received, True)
         except Exception as e:
             dispatcher.bot.sendMessage(
                 chat_id=chat_id,
                 text='发送信息时出错：{}'.format(e)
             )
 
-            message_log(now_time, chat_info, received, False, e)
+            message_log(chat_info, received, False, e)
 
 
 # 新番时间表
 def bangumi_calendar(update, context):
     bangumi_str = ''
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     markup = InlineKeyboardMarkup([[InlineKeyboardButton('日', None, 7),
                                     InlineKeyboardButton('一', None, 1),
@@ -107,7 +104,7 @@ def bangumi_calendar(update, context):
     try:
         update.message.reply_text('收到消息，正在处理中')
     except Exception as e:
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
     message = update.message.text.split(' ')    # 获取输入数据
     # 判断是否指定了日期
@@ -129,9 +126,9 @@ def bangumi_calendar(update, context):
                 reply_markup=markup
             )
 
-            message_log(now_time, chat_info, received, True)
+            message_log(chat_info, received, True)
         except Exception as e:
-            message_log(now_time, chat_info, received, False, e)
+            message_log(chat_info, received, False, e)
     else:   # 未指定日期
         bangumi_info = bangumi.calendar()
         for i in range(bangumi_info.get('num')):
@@ -149,24 +146,23 @@ def bangumi_calendar(update, context):
                 reply_markup=markup
             )
 
-            message_log(now_time, chat_info, received, True)
+            message_log(chat_info, received, True)
         except Exception as e:
             dispatcher.bot.sendMessage(
                 chat_id=chat_id,
                 text='发送消息时出现错误{}'.format(e)
             )
 
-            message_log(now_time, chat_info, received, False, e)
+            message_log(chat_info, received, False, e)
 
 
 # 随机Pixiv图片
 def sese(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         update.message.reply_text('收到消息，正在处理中')
@@ -177,7 +173,6 @@ def sese(update, context):
     log_output('"sese":获取到图片信息：{}'.format(pic_info))
 
     markup = InlineKeyboardMarkup([[InlineKeyboardButton('查看来源页面','https://www.pixiv.net/artworks/{}'.format(pic_info.get('pid')))]])
-    # markup = InlineKeyboardMarkup([[InlineKeyboardButton('查看来源页面', None, 'test?{}'.format(pic_info.get('username')))]])
 
     try:
         # 判断投稿内的作品数量，用不同的格式发送
@@ -193,7 +188,7 @@ def sese(update, context):
                 reply_markup=markup
             )
 
-            message_log(now_time, chat_info, received, True)
+            message_log(chat_info, received, True)
         elif pic_info.get('num') == 1:  # 投稿内仅一张作品
             dispatcher.bot.sendPhoto(
                 chat_id=chat_id,
@@ -205,14 +200,14 @@ def sese(update, context):
                 reply_markup=markup
             )
 
-            message_log(now_time, chat_info, received, True)
+            message_log(chat_info, received, True)
         else:   # 发生错误
             dispatcher.bot.sendMessage(
                 chat_id=chat_id,
                 text='获取图片时发生错误：{}'.format(pic_info.get('message')),
             )
 
-            message_log(now_time, chat_info, received, False, pic_info.get('message'))
+            message_log(chat_info, received, False, pic_info.get('message'))
     except Exception as e:
         if pic_info.get('message') is None:
             dispatcher.bot.sendMessage(
@@ -222,24 +217,23 @@ def sese(update, context):
                 reply_markup=markup
             )
 
-            message_log(now_time, chat_info, received, False, e)
+            message_log(chat_info, received, False, e)
         else:
             dispatcher.bot.sendMessage(
                 chat_id=chat_id,
                 text='获取图片时发生错误：{}'.format(pic_info.get('message')),
             )
 
-            message_log(now_time, chat_info, received, False, pic_info.get('message'))
+            message_log(chat_info, received, False, pic_info.get('message'))
 
 
 # Pixiv日榜
 def day_rank(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         update.message.reply_text('收到消息，正在处理中')
@@ -270,17 +264,16 @@ def day_rank(update, context):
 
 # Pixiv周榜
 def week_rank(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         update.message.reply_text('收到消息，正在处理中')
     except Exception as e:
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
     message = update.message.text.split(' ')
 
@@ -306,17 +299,16 @@ def week_rank(update, context):
 
 # Pixiv月榜
 def month_rank(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         update.message.reply_text('收到消息，正在处理中')
     except Exception as e:
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
     message = update.message.text.split(' ')
 
@@ -342,17 +334,16 @@ def month_rank(update, context):
 
 # Pixiv R18日榜
 def day_rank_r18(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         update.message.reply_text('收到消息，正在处理中')
     except Exception as e:
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
     message = update.message.text.split(' ')
 
@@ -369,26 +360,25 @@ def day_rank_r18(update, context):
             log_output('输入的数字超出了限制,返回警告')
             return
 
-        send_photos(chat_id, 'month', page - 1)
+        send_photos(chat_id, 'day_r18', page - 1)
 
     else:
 
-        send_photos(chat_id, 'month', 0)
+        send_photos(chat_id, 'day_r18', 0)
 
 
 # Pixiv R18周榜
 def week_rank_r18(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         update.message.reply_text('收到消息，正在处理中')
     except Exception as e:
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
     message = update.message.text.split(' ')
 
@@ -414,17 +404,16 @@ def week_rank_r18(update, context):
 
 # Pixiv R18G排行榜
 def rank_r18g(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         update.message.reply_text('收到消息，正在处理中')
     except Exception as e:
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
     message = update.message.text.split(' ')
 
@@ -450,12 +439,11 @@ def rank_r18g(update, context):
 
 # 获取帮助
 def help(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     markup = InlineKeyboardMarkup([
         [InlineKeyboardButton('Pixiv图片', None, 'pixiv')],
@@ -471,19 +459,18 @@ def help(update, context):
             reply_markup=markup
         )
 
-        message_log(now_time, chat_info, received, True)
+        message_log(chat_info, received, True)
     except Exception as e:
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
 
 # 关于
 def about(update, context):
-    now_time = get_time()
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
 
-    message_log(now_time, chat_info, received)
+    message_log(chat_info, received)
 
     try:
         dispatcher.bot.sendMessage(
@@ -495,12 +482,12 @@ def about(update, context):
             parse_mode='HTML'
         )
 
-        message_log(now_time, chat_info, received, True)
+        message_log(chat_info, received, True)
     except Exception as e:
-        message_log(now_time, chat_info, received, False, e)
+        message_log(chat_info, received, False, e)
 
 
-def query_func(update, context):
+def query_mgt(update, context):
     """点击消息按钮的处理函数
 
     :param update:
@@ -699,14 +686,17 @@ def get_time():
 def message_log(*args):
     """接收/发送消息日志
 
-    <now_time>, <chat_info>, <received>, [send_state], [err_info]
+    用于提示消息的接收与发送
 
-    :param args: <now_time>, <chat_info>, <received>, [send_state], [err_info]
+    :param args: chat_info 信息发送时携带的信息
+    :param args: received 收到的指令内容
+    :param args: send_state 可选的，消息发送状态
+    :param args: err_info 可选的，错误信息。只有在拥有消息发送状态时才有效
     :return: None
     """
     try:
-        chat_info = args[1]
-        received = args[2]
+        chat_info = args[0]
+        received = args[1]
 
         command = received.split(' ')[0].split('@')[0].split('/')[1]
         if len(args) == 3:
@@ -721,7 +711,7 @@ def message_log(*args):
                 log_info = '"{}":收到来自用户<{}>的消息'.format(command, msg_src, received)
         elif 4 <= len(args) <= 5:
             # send_message
-            send_state = args[3]
+            send_state = args[2]
             if send_state:
                 if chat_info.username is None:
                     msg_src = chat_info.title
@@ -732,7 +722,7 @@ def message_log(*args):
 
                     log_info = '"{}":成功向用户<{}>发送消息'.format(command, msg_src)
             else:
-                err_info = args[4]
+                err_info = args[3]
                 if chat_info.username is None:
                     msg_src = chat_info.title
 
@@ -753,9 +743,13 @@ def message_log(*args):
 def log_output(log_info):
     """日志输出
 
+    在‘log’文件夹下对应日期的文件中写入日志以及在控制台中输出日志
+
     :param log_info:日志内容
-    :return: 在‘log’文件夹下对应日期的文件中写入日志以及在控制台中输出日志
+    :return: 带有时间的日志信息
     """
+    if not os.path.exists('./logs'): os.mkdir('./logs')
+
     now_time = get_time().split(' ')[0]
 
     log_file = open('./logs/{}.txt'.format(now_time), 'a+', encoding='UTF-8')
@@ -763,6 +757,60 @@ def log_output(log_info):
     log_file.close()
 
     print('[{}]{}'.format(get_time(), log_info))
+
+
+def cache_mgt(cache_title, cache_content):
+    """缓存管理
+
+    清除过期缓存，写入缓存
+
+    :param cache_title: 缓存标题
+    :param cache_content: 缓存内容
+    :return: None
+    """
+    if not os.path.exists('./caches'): os.mkdir('./caches')     # 检查缓存目录是否存在，不存在则创建
+
+    now_time = get_time().split(' ')[0]
+
+    # 检查并清除过期缓存
+    for file in os.listdir('./caches'):
+        new_time = datetime.datetime.now(pytz.timezone('Asia/Shanghai'))
+        file_time = os.path.splitext(file)[0].split('+')[0]
+        delta = datetime.timedelta(days=7)
+
+        if file_time == (new_time - delta).strftime('%Y-%m-%d'):
+            log_output('"cache_mgt":清理过期缓存')
+            try:
+                os.remove('./caches/{}'.format(file))
+
+                log_output('"cache_mgt":删除文件{}成功'.format(file))
+            except Exception as e:
+                log_output('"cache_mgt":删除文件{}时出现错误{}'.format(file, e))
+
+
+    # 写入缓存
+    cache_file = open('./caches/{}+{}.txt'.format(now_time, cache_title), 'a+', encoding='UTF-8')
+
+    try:
+        str_cache_content = ''
+
+        for char in str(cache_content):
+            if char == '"':
+                str_cache_content += '\''
+            elif char == '\'':
+                str_cache_content += '"'
+            else:
+                str_cache_content += char
+
+        cache_file.write(str_cache_content)
+
+        log_output('"cache_mgt":成功写入缓存')
+    except Exception as e:
+        if os.path.exists('./caches/{}+{}.txt'.format(now_time, cache_title)): os.remove('./caches/{}+{}.txt'.format(now_time, cache_title))
+
+        log_output('"cache_mgt":写入缓存时出现错误{}，删除缓存文件'.format(e))
+
+    cache_file.close()
 
 
 if __name__ == '__main__':
@@ -785,7 +833,7 @@ if __name__ == '__main__':
     dispatcher.add_handler(CommandHandler("rank_r18g", rank_r18g))
     dispatcher.add_handler(CommandHandler("help", help))
     dispatcher.add_handler(CommandHandler("about", about))
-    dispatcher.add_handler(CallbackQueryHandler(query_func))
+    dispatcher.add_handler(CallbackQueryHandler(query_mgt))
 
     updater.start_polling()
     updater.idle()

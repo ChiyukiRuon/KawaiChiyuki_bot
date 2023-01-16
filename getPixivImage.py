@@ -1,4 +1,5 @@
 import json
+import os
 import random
 
 import requests
@@ -39,8 +40,27 @@ def pixiv_rank(*args):
     rank_type = args[0]
     resp_list = []
 
+    for file in os.listdir('./caches'):
+        file_name = os.path.splitext(file)[0].split('+')
+
+        if file_name[0] == bot.get_time().split(' ')[0] and file_name[1] == rank_type:
+            bot.log_output('"pixiv_rank":找到{}类型的缓存数据'.format(rank_type))
+
+            with open('./caches/{}'.format(file), 'r', encoding='UTF-8') as f:
+                resp_list = json.loads(f.read())
+            f.close()
+
+            bot.log_output('"pixiv_rank":从缓存返回的图片数据{}'.format(resp_list))
+
+            return resp_list
+
+        else:
+            pass
+
     api = api_list[0]
+
     if len(args) > 1 and args[1] < len(api_list): api = api_list[args[1]]
+
     bot.log_output('"pixiv_rank":使用API-{}进行搜索'.format(api))
 
     url = '{}rank?mode={}'.format(api, rank_type)
@@ -94,6 +114,10 @@ def pixiv_rank(*args):
             resp_list.append(response)
 
     bot.log_output('"pixiv_rank":返回的图片数据{}'.format(resp_list))
+
+    bot.cache_mgt(rank_type, resp_list)
+
+    bot.log_output('"pixiv_rank":写入{}类型的缓存'.format(rank_type))
 
     return resp_list
 
