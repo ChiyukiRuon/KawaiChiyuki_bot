@@ -7,6 +7,7 @@ from telegram import InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 import bangumi
+import crazyKFC
 import getPixivImage
 import yiyan
 
@@ -19,6 +20,9 @@ def start(update, context):
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
+
+    if request_filter(chat_info.id):
+        return
 
     # 输出接受消息的日志
     message_log(chat_info, received)
@@ -49,6 +53,9 @@ def yan(update, context):
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
+
+    if request_filter(chat_info.id):
+        return
 
     message_log(chat_info, received)
 
@@ -89,6 +96,9 @@ def bangumi_calendar(update, context):
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
+
+    if request_filter(chat_info.id):
+        return
 
     message_log(chat_info, received)
 
@@ -156,11 +166,45 @@ def bangumi_calendar(update, context):
             message_log(chat_info, received, False, e)
 
 
+# 疯狂星期四文案
+def crazy_kfc(update, context):
+    chat_id = update.message.chat_id
+    received = update.message.text
+    chat_info = update.message.chat
+
+    if request_filter(chat_info.id):
+        return
+
+    message_log(chat_info, received)
+
+    try:
+        update.message.reply_text('收到消息，正在处理中')
+    except Exception as e:
+        log_output('"crazy_kfc":发送消息时遇到错误{}'.format(e))
+
+    try:
+        dispatcher.bot.sendMessage(
+            chat_id=chat_id,
+            text=crazyKFC.crazy_kfc()
+        )
+
+        message_log(chat_info, received, True)
+    except Exception as e:
+        dispatcher.bot.sendMessage(
+            chat_id=chat_id,
+            text='发送消息时出现错误{}'.format(e)
+        )
+
+        message_log(chat_info, received, False, e)
+
 # 随机Pixiv图片
 def sese(update, context):
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
+
+    if request_filter(chat_info.id):
+        return
 
     message_log(chat_info, received)
 
@@ -233,6 +277,9 @@ def day_rank(update, context):
     received = update.message.text
     chat_info = update.message.chat
 
+    if request_filter(chat_info.id):
+        return
+
     message_log(chat_info, received)
 
     try:
@@ -267,6 +314,9 @@ def week_rank(update, context):
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
+
+    if request_filter(chat_info.id):
+        return
 
     message_log(chat_info, received)
 
@@ -303,6 +353,9 @@ def month_rank(update, context):
     received = update.message.text
     chat_info = update.message.chat
 
+    if request_filter(chat_info.id):
+        return
+
     message_log(chat_info, received)
 
     try:
@@ -337,6 +390,9 @@ def day_rank_r18(update, context):
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
+
+    if request_filter(chat_info.id):
+        return
 
     message_log(chat_info, received)
 
@@ -373,6 +429,9 @@ def week_rank_r18(update, context):
     received = update.message.text
     chat_info = update.message.chat
 
+    if request_filter(chat_info.id):
+        return
+
     message_log(chat_info, received)
 
     try:
@@ -407,6 +466,9 @@ def rank_r18g(update, context):
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
+
+    if request_filter(chat_info.id):
+        return
 
     message_log(chat_info, received)
 
@@ -443,6 +505,9 @@ def help(update, context):
     received = update.message.text
     chat_info = update.message.chat
 
+    if request_filter(chat_info.id):
+        return
+
     message_log(chat_info, received)
 
     markup = InlineKeyboardMarkup([
@@ -469,6 +534,9 @@ def about(update, context):
     chat_id = update.message.chat_id
     received = update.message.text
     chat_info = update.message.chat
+
+    if request_filter(chat_info.id):
+        return
 
     message_log(chat_info, received)
 
@@ -699,7 +767,7 @@ def message_log(*args):
         received = args[1]
 
         command = received.split(' ')[0].split('@')[0].split('/')[1]
-        if len(args) == 3:
+        if len(args) == 2:
             # receive_message
             if chat_info.username is None:
                 msg_src = chat_info.title
@@ -709,7 +777,7 @@ def message_log(*args):
                 msg_src = '{} {}(id:{})'.format(chat_info.first_name, chat_info.last_name, chat_info.id)
 
                 log_info = '"{}":收到来自用户<{}>的消息'.format(command, msg_src, received)
-        elif 4 <= len(args) <= 5:
+        elif 3 <= len(args) <= 4:
             # send_message
             send_state = args[2]
             if send_state:
@@ -733,7 +801,7 @@ def message_log(*args):
                     log_info = '"{}":向用户<{}>发送消息时出现错误{}'.format(command, msg_src, err_info)
         else:
             # error
-            log_info = '"message_log":传入参数错误,数量应为3个或4个'
+            log_info = '"message_log":传入参数数量错误'
     except Exception as e:
         log_info = '"message_log":传入参数错误{}'.format(e)
 
@@ -776,9 +844,9 @@ def cache_mgt(cache_title, cache_content):
     for file in os.listdir('./caches'):
         new_time = datetime.datetime.now(pytz.timezone('Asia/Shanghai'))
         file_time = os.path.splitext(file)[0].split('+')[0]
-        delta = datetime.timedelta(days=7)
+        delta = datetime.timedelta(days=7)  # TODO 自定义缓存留存日期
 
-        if file_time == (new_time - delta).strftime('%Y-%m-%d'):
+        if file_time <= (new_time - delta).strftime('%Y-%m-%d'):
             log_output('"cache_mgt":清理过期缓存')
             try:
                 os.remove('./caches/{}'.format(file))
@@ -813,6 +881,31 @@ def cache_mgt(cache_title, cache_content):
     cache_file.close()
 
 
+# 请求过滤
+last_command_time = {}
+def request_filter(user_id):
+    """ 拦截同一用户短时间内的多次请求
+
+    :param user_id: Telegram用户ID
+    :return: True-拦截，False-放行
+    """
+    # 获取当前时间戳
+    now = datetime.datetime.now()
+
+    # 如果用户上一次发送命令的时间距离现在不到60秒，拦截该命令
+    if user_id in last_command_time and now - last_command_time[user_id] < datetime.timedelta(seconds=60):
+        log_output('"request_filter":拦截用户<{}>的请求'.format(user_id))
+
+        return True
+
+    # 更新用户上一次发送命令的时间
+    last_command_time[user_id] = now
+
+    log_output('"request_filter":已放行用户<{}>的请求'.format(user_id))
+
+    return False
+
+
 if __name__ == '__main__':
     updater = Updater(token=TOKEN, request_kwargs={
         'proxy_url': 'socks5h://127.0.0.1:11223/'
@@ -824,6 +917,7 @@ if __name__ == '__main__':
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("yan", yan))
     dispatcher.add_handler(CommandHandler("bangumi", bangumi_calendar))
+    dispatcher.add_handler(CommandHandler("crazy_kfc", crazy_kfc))
     dispatcher.add_handler(CommandHandler("sese", sese))
     dispatcher.add_handler(CommandHandler("day_rank", day_rank))
     dispatcher.add_handler(CommandHandler("week_rank", week_rank))
