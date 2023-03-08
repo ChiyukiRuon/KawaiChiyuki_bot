@@ -40,6 +40,8 @@ def pixiv_rank(*args):
     rank_type = args[0]
     resp_list = []
 
+    bot.clear_cache(7)
+
     for file in os.listdir('./caches'):
         file_name = os.path.splitext(file)[0].split('+')
 
@@ -115,7 +117,7 @@ def pixiv_rank(*args):
 
     bot.log_output('"pixiv_rank":返回的图片数据{}'.format(resp_list))
 
-    bot.cache_mgt(rank_type, resp_list)
+    bot.write_cache(rank_type, resp_list)
 
     bot.log_output('"pixiv_rank":写入{}类型的缓存'.format(rank_type))
 

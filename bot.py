@@ -827,7 +827,7 @@ def log_output(log_info):
     print('[{}]{}'.format(get_time(), log_info))
 
 
-def cache_mgt(cache_title, cache_content):
+def write_cache(cache_title, cache_content):
     """缓存管理
 
     清除过期缓存，写入缓存
@@ -839,22 +839,6 @@ def cache_mgt(cache_title, cache_content):
     if not os.path.exists('./caches'): os.mkdir('./caches')     # 检查缓存目录是否存在，不存在则创建
 
     now_time = get_time().split(' ')[0]
-
-    # 检查并清除过期缓存
-    for file in os.listdir('./caches'):
-        new_time = datetime.datetime.now(pytz.timezone('Asia/Shanghai'))
-        file_time = os.path.splitext(file)[0].split('+')[0]
-        delta = datetime.timedelta(days=7)  # TODO 自定义缓存留存日期
-
-        if file_time <= (new_time - delta).strftime('%Y-%m-%d'):
-            log_output('"cache_mgt":清理过期缓存')
-            try:
-                os.remove('./caches/{}'.format(file))
-
-                log_output('"cache_mgt":删除文件{}成功'.format(file))
-            except Exception as e:
-                log_output('"cache_mgt":删除文件{}时出现错误{}'.format(file, e))
-
 
     # 写入缓存
     cache_file = open('./caches/{}+{}.txt'.format(now_time, cache_title), 'a+', encoding='UTF-8')
@@ -872,13 +856,44 @@ def cache_mgt(cache_title, cache_content):
 
         cache_file.write(str_cache_content)
 
-        log_output('"cache_mgt":成功写入缓存')
+        log_output('"write_cache":成功写入缓存')
     except Exception as e:
         if os.path.exists('./caches/{}+{}.txt'.format(now_time, cache_title)): os.remove('./caches/{}+{}.txt'.format(now_time, cache_title))
 
-        log_output('"cache_mgt":写入缓存时出现错误{}，删除缓存文件'.format(e))
+        log_output('"write_cache":写入缓存时出现错误{}，删除缓存文件'.format(e))
 
     cache_file.close()
+
+
+# 清理过期缓存
+def clear_cache(time):
+    """清理过期缓存
+
+    :param time: 缓存过期时间(天)
+    :return: None
+    """
+    num = 0
+    success = 0
+    error = 0
+    for file in os.listdir('./caches'):
+        new_time = datetime.datetime.now(pytz.timezone('Asia/Shanghai'))
+        file_time = os.path.splitext(file)[0].split('+')[0]
+        delta = datetime.timedelta(days=time)
+
+        num += 1
+
+        if file_time <= (new_time - delta).strftime('%Y-%m-%d'):
+            log_output('"clear_cache":清理过期缓存')
+            try:
+                os.remove('./caches/{}'.format(file))
+
+                log_output('"clear_cache":删除文件{}成功'.format(file))
+                success += 1
+            except Exception as e:
+                log_output('"clear_cache":删除文件{}时出现错误{}'.format(file, e))
+                error += 1
+
+    log_output('"clear_cache":共扫描缓存文件{}个，成功删除{}个过期文件，{}个文件删除失败'.format(num, success, error))
 
 
 # 请求过滤
